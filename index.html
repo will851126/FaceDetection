@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Face Detection | Serverless Lab</title>
+
+  <!-- CSS  -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+</head>
+
+<body class="white" style="font-family:Microsoft JhengHei;height: 100%;">
+  <div id="noMobile" v-if="member.isMobile===false" style="background-color:#1A6CBD;height: 100%;">
+    <div class="row white-text">
+      <div class="col s8 push-s1" style="padding-top:15%;">
+        <h5 style="font-weight: 550;font-size:1.8rem">Serverless Lab</h5>
+        <h5 style="font-weight: 200;font-size:1.4rem">Please use mobile device to browse this page</h5>
+      </div>
+      <div class="col s3 push-s1" style="padding-top:15%;">
+        <img src="https://raw.githubusercontent.com/JamesHsu333/ServerlessLab/master/images/warning.png"
+          style="width:35%;" rel="preload">
+      </div>
+    </div>
+  </div>
+  <div id="index-banner" v-if="isMobile===true">
+    <div class="row white-text" style="background-color:#1A6CBD;padding-bottom:100px">
+      <div class="col s8 push-s1" style="padding-top:20px">
+        <h5 style="font-weight: 550;font-size:1.5rem">Serverless Lab</h5>
+        <div class="col s1 divider" style="height: 5px;background-color:white;"></div>
+      </div>
+      <div class="col s3" style="padding-top:30px">
+        <img class="right" src="https://raw.githubusercontent.com/JamesHsu333/ServerlessLab/master/images/ff.png"
+          style="width:70%;height:70%;" border="0" rel="preload"></img>
+      </div>
+    </div>
+    <img class="circle responsive-img z-depth-2"
+      style="width:35%; display: block; margin-left: auto; margin-right: auto;margin-top:-90px" :src="user.imageUrl">
+    <div class="row black-text">
+      <div class="col s8 push-s2" style="text-align:center">
+        <h5 style="font-weight: 550;font-size:1.5rem;">{{user.name}}</h5>
+        <a class="btn-flat teal accent-3 modal-trigger white-text" href="#modal1"
+          v-show="isRegister===false">Register</a>
+      </div>
+    </div>
+    <div v-show="isRegister===true" class="black-text">
+      <div class="row" style="text-align: center;">
+        <div class="col s4">
+          <i class="material-icons">person</i>
+          <h5 style="font-weight: 550;font-size:1.5rem;">{{user.faceAttributes.age}}</h5>
+          <p>Age</p>
+        </div>
+        <div class="col s4">
+          <i class="material-icons">wc</i>
+          <h5 style="font-weight: 550;font-size:1.5rem;">{{user.faceAttributes.gender}}</h5>
+          <p>Gender</p>
+        </div>
+        <div class="col s4">
+          <i class="material-icons">mood</i>
+          <h5 style="font-weight: 550;font-size:1.5rem;">{{user.faceAttributes.smile | isSmile}}</h5>
+          <p>Mood</p>
+        </div>
+        <div class="col s4 push-s4">
+          <img class="center"
+            src="https://raw.githubusercontent.com/JamesHsu333/ServerlessLab/master/images/glasses.png"
+            style="width:70%;height:70%;display: block; margin-left: auto; margin-right: auto;" rel="preload"></img>
+        </div>
+        <div class="col s12">
+          <h5 style="font-weight: 550;font-size:1.5rem;">{{user.faceAttributes.glasses | wear}}</h5>
+        </div>
+      </div>
+      <div class="row" style="text-align: center;">
+        <a class="btn-flat green accent-2" @click="window.open('./face.html')">Login with Face Verify</a>
+      </div>
+    </div>
+
+    <div id="modal1" class="modal light-blue lighten-2" style="width: 90%;">
+      <div class="modal-content" style="margin-top: -5%;">
+        <div class="white-text">
+          <h5 style="font-weight: 550;font-size:1.5rem;text-align: center;">Register</h5>
+        </div>
+        <div class="aboutUs__member__picture" style="padding-top: 2%;">
+          <form class="col s12">
+            <div class="input-field file-field col s8 push-s2" style="padding-bottom: 5%;">
+              <input type="file" @change="updateImage" accept="image/*">
+              <img class="circle responsive-img z-depth-2"
+                style="width:35%; display: block; margin-left: auto; margin-right: auto;" :src="user.imageUrl">
+            </div>
+            <p class="white-text" style="text-align: center;padding: 2px;">Click image to upload profile</p>
+            <div class="input-field col s12" style="text-align: center;padding: 2px;">
+              <i class="material-icons prefix">account_circle</i>
+              <input type="text" class="validate" v-model="user.name">
+              <label for="icon_prefix">User Name</label>
+            </div>
+          </form>
+        </div>
+      </div>
+      <div class="modal-footer light-blue lighten-2">
+        <a href="#!" class="modal-close waves-effect waves-green btn-flat white-text"
+          @click="detectFace(user.imageUrl)">Submit</a>
+        <a href="#!" class="modal-close waves-effect waves-green btn-flat white-text">Cancel</a>
+      </div>
+    </div>
+
+    <transition name="slide-fade">
+      <div v-if="notice.isTrigger===true && notice.currentNotice!==''" class="snackbar">
+        <div v-if="notice.currentNotice==='face'" class="row">
+          <img rel="preload" class="center"
+            src="https://raw.githubusercontent.com/JamesHsu333/ServerlessLab/master/images/face.png"
+            style="width:20%;height:20%;display: block; margin-left: auto; margin-right: auto;"></img>
+          <p>Please upload image with face</p>
+        </div>
+        <div v-if="notice.currentNotice==='glasses'" class="row">
+          <img rel="preload" class="center"
+            src="https://raw.githubusercontent.com/JamesHsu333/ServerlessLab/master/images/sunglasses.png"
+            style="width:20%;height:20%;display: block; margin-left: auto; margin-right: auto;"></img>
+          <p>Upload image without sunglasses</p>
+        </div>
+      </div>
+    </transition>
+
+    <transition name="slide-fade">
+      <div v-if="notice.isLoading===true" class="snackbar" style="height: 30%;">
+        <img rel="preload" class="center"
+          src="https://vsoch.github.io/assets/images/posts/learning-go/gophercises_jumping.gif"
+          style="width:50%;display: block; margin-left: auto; margin-right: auto;margin-top: -10% ;"></img>
+        <div class="loader">
+          <p>LOADING</p>
+        </div>
+      </div>
+    </transition>
+
+  </div>
+  <!-- Scripts-->
+  <script src="https://code.jquery.com/jquery-3.1.1.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.19.0/axios.js"></script>
+  <script src="https://raw.githubusercontent.com/JamesHsu333/ServerlessLab/master/variable.js"></script>
+  <script type=text/javascript src="./variable.js"></script>
+  <script>
+    var member = new Vue({
+      el: "#index-banner",
+      data: {
+        "user": {
+          "name": "User",
+          "imageUrl": "https://raw.githubusercontent.com/JamesHsu333/ServerlessLab/master/images/user.png",
+          "faceAttributes": {},
+          "faceId": ""
+        },
+        "isRegister": false,
+        "isMobile": true,
+        "notice": {
+          "isTrigger": false,
+          "currentNotice": "",
+          "isLoading": false
+        }
+      },
+      filters: {
+        wear(value) {
+          if (value === "NoGlasses") {
+            return 'No Glasses';
+          } else {
+            return 'Wearing ' + value;
+          }
+        },
+        isSmile(value) {
+          if (value > 0.8) {
+            return 'Grin';
+          } else if (0.4 <= value <= 0.8) {
+            return 'Smile';
+          } else {
+            return 'Neutral';
+          }
+        }
+      },
+      methods: {
+        updateImage(input) {
+          let image = input.target.files[0];
+          let reader = new FileReader();
+          reader.readAsDataURL(image);
+          reader.onload = () => {
+            this.user.imageUrl = reader.result;
+          };
+        },
+        detectFace(image) {
+          this.loading();
+          fetch(image)
+            .then(res => {
+              return res.blob();
+            })
+            .then(blobData => {
+              var params = "returnFaceAttributes=age%2Cgender%2CfacialHair%2Cglasses%2Cemotion%2Csmile%2Caccessories";
+              axios({
+                method: 'post',
+                url: faceapiURL + "?" + params,
+                headers: {
+                  "Content-Type": "application/octet-stream",
+                  'Ocp-Apim-Subscription-Key': SubscriptionKey
+                },
+                data: blobData
+              }).then((data) => {
+                if (data.data.length !== 0) {
+                  if (data.data[0].faceAttributes.glasses !== 'Sunglasses') {
+                    this.loading().then(() => {
+                      console.log(data.data[0].faceAttributes);
+                      this.user.faceAttributes = data.data[0].faceAttributes;
+                      this.user.faceId = data.data[0].faceId;
+                      this.isRegister = true;
+                      console.log(this.user.faceAttributes);
+                    }).then(() => {
+                      let req = JSON.stringify({
+                        "age": this.user.faceAttributes.age,
+                        "gender": this.user.faceAttributes.gender,
+                        "glasses": this.user.faceAttributes.glasses,
+                        "smile": this.user.faceAttributes.smile,
+                        "faceId": this.user.faceId,
+                        "user": this.user.name
+                      });
+
+                      this.postUserInfo(req);
+                    });
+                  } else {
+                    this.loading();
+                    this.showSnackBar("glasses").then(this.closeSnackBar());
+                  }
+                } else {
+                  this.loading();
+                  this.showSnackBar("face").then(this.closeSnackBar());;
+                }
+              }).catch((err) => {
+                console.log(err);
+              })
+            });
+        },
+        checkMobile() {
+          try {
+            document.createEvent("TouchEvent");
+            return true;
+          } catch (err) {
+            return false;
+          }
+        },
+        postUserInfo(data) {
+          axios({
+            method: 'post',
+            url: DetectFaceURL,
+            headers: {
+              "Content-Type": "application/json"
+            },
+            data: data
+          }).then(res => {
+            console.log(res);
+            console.log('Success');
+          }).catch(err => {
+            console.log(err);
+            console.log('Error');
+          })
+        },
+        async showSnackBar(Notice) {
+          this.notice.currentNotice = Notice;
+        },
+        async loading() {
+          this.notice.isLoading = !this.notice.isLoading;
+        },
+        closeSnackBar() {
+          this.notice.isTrigger = true;
+          setTimeout(() => { this.notice.isTrigger = false }, 3000);
+        }
+      },
+      mounted() {
+        if (!this.checkMobile()) {
+          this.isMobile = false;
+          this.preloadImage();
+        };
+        $('.parallax').parallax();
+        $('.modal').modal({
+          dismissible: false,
+          opacity: 0.8,
+          startingTop: '25%',
+          endingTop: '20%'
+        });
+      }
+    });
+
+    var noMobile = new Vue({
+      el: "#noMobile",
+      data: {
+
+      }
+    });
+
+  </script>
+  <style>
+      html {
+        height: 100%;
+      }
+  
+      body {
+        min-height: 100%;
+      }
+  
+      p {
+        line-height: 2rem;
+      }
+  
+      .modal-overlay {
+        background: none;
+      }
+  
+      .snackbar {
+        background-color: #333;
+        color: #fff;
+        text-align: center;
+        border-radius: 30px;
+        padding: 16px;
+        right: 0;
+        left: 0;
+        margin-right: auto;
+        margin-left: auto;
+        top: 0;
+        bottom: 0;
+        margin-top: 40%;
+        margin-bottom: auto;
+        text-align: center;
+        width: 80%;
+        height: 20%;
+        position: fixed;
+        display: inline-block;
+      }
+  
+      .slide-fade-enter-active {
+        transition: all .3s ease;
+      }
+  
+      .slide-fade-leave-active {
+        transition: all .8s cubic-bezier(1.0, 0.5, 0.8, 1.0);
+      }
+  
+      .slide-fade-enter,
+      .slide-fade-leave-to {
+        transform: translateX(10px);
+        opacity: 0;
+      }
+  
+      .loader {
+        z-index: 99;
+        -webkit-animation-name: spaceboots;
+        -webkit-animation-duration: 1.6s;
+        -webkit-transform-origin: 50% 50%;
+        -webkit-animation-iteration-count: infinite;
+        -webkit-animation-timing-function: linear;
+      }
+  
+      @-webkit-keyframes spaceboots {
+        0% {
+          -webkit-transform: translate(2px, 1px) rotate(0deg);
+        }
+  
+        10% {
+          -webkit-transform: translate(-1px, -2px) rotate(-1deg);
+        }
+  
+        20% {
+          -webkit-transform: translate(-3px, 0px) rotate(1deg);
+        }
+  
+        30% {
+          -webkit-transform: translate(0px, 2px) rotate(0deg);
+        }
+  
+        40% {
+          -webkit-transform: translate(1px, -1px) rotate(1deg);
+        }
+  
+        50% {
+          -webkit-transform: translate(-1px, 2px) rotate(-1deg);
+        }
+  
+        60% {
+          -webkit-transform: translate(-3px, 1px) rotate(0deg);
+        }
+  
+        70% {
+          -webkit-transform: translate(2px, 1px) rotate(-1deg);
+        }
+  
+        80% {
+          -webkit-transform: translate(-1px, -1px) rotate(1deg);
+        }
+  
+        90% {
+          -webkit-transform: translate(2px, 2px) rotate(0deg);
+        }
+  
+        100% {
+          -webkit-transform: translate(1px, -2px) rotate(-1deg);
+        }
+      }
+    </style>
+</body>
+
+</html>
