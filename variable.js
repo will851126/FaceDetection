@@ -1,4 +1,4 @@
 let faceapiURL = "";
 let SubscriptionKey = "";
 let DetectFaceURL = "";
-let VerifyFaceURL = "
+let VerifyFaceURL = ";
